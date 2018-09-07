@@ -252,7 +252,7 @@ map <C-i> :tabn <CR><CR>
 filetype plugin indent on
 autocmd FileType c,cc,cpp,hpp,h,python,cython setlocal shiftwidth=2 tabstop=2
 
-" share clipboard in IOS 
+" share clipboard in MacOS 
 set clipboard=unnamed
 
 " fix the issue that save scala file slow,
