@@ -9,13 +9,13 @@ call plug#begin('~/.vim/plugged')
 
 " 颜色主题
 Plug 'tomasr/molokai'
-Plug 'Solarized'
+Plug 'altercation/solarized'
 Plug 'bling/vim-airline'
 Plug 'edkolev/tmuxline.vim'
 
 " 快速补全
 Plug 'quark-zju/vim-cpp-auto-include'
-Plug 'AutoComplPop'
+Plug 'vim-scripts/AutoComplPop'
 Plug 'vim-scripts/taglist.vim'
 
 " ---- vim as IDE --------
@@ -51,7 +51,7 @@ Plug 'Raimondi/delimitMate'
 " working with git
 Plug 'tpope/vim-fugitive'
 Plug 'airblade/vim-gitgutter'
-Plug 'Gist.vim'
+Plug 'mattn/gist-vim'
 
 " ---- man pages, tmux ------
 Plug 'jez/vim-superman'
@@ -122,9 +122,9 @@ nmap <silent> <leader>b :TagbarToggle<CR>
 
 let g:solarized_termcolors=16
 " 两种流行风格的主题
-" colorscheme molokai
+colorscheme molokai
 set background=dark
-colorscheme solarized
+" colorscheme solarized
 "set background=light
 
 " ----- bling/vim-airline 设置-----
@@ -252,7 +252,7 @@ map <C-i> :tabn <CR><CR>
 filetype plugin indent on
 autocmd FileType c,cc,cpp,hpp,h,python,cython setlocal shiftwidth=2 tabstop=2
 
-" share clipboard in MacOS 
+" share clipboard in macOS 
 set clipboard=unnamed
 
 " fix the issue that save scala file slow,
