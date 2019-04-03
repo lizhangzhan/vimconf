@@ -9,7 +9,7 @@ call plug#begin('~/.vim/plugged')
 
 " 颜色主题
 Plug 'tomasr/molokai'
-Plug 'altercation/solarized'
+Plug 'google/vim-colorscheme-primary'
 Plug 'bling/vim-airline'
 Plug 'edkolev/tmuxline.vim'
 
@@ -61,9 +61,16 @@ Plug 'Raimondi/delimitMate'
 Plug 'kana/vim-fakeclip'
 Plug 'terryma/vim-multiple-cursors'
 
-" scala support
+" language support
 Plug 'derekwyatt/vim-scala'
 Plug 'pangloss/vim-javascript'
+
+" python document support
+Plug 'vim-scripts/pydoc.vim'
+
+Plug 'google/vim-maktaba'
+Plug 'google/vim-codefmt'
+Plug 'google/vim-glaive'
 
 call plug#end()
 
@@ -117,15 +124,10 @@ let g:airline#extensions#hunks#non_zero_only = 1
 "  " Open/close tagbar with \b
 nmap <silent> <leader>b :TagbarToggle<CR>
 
-"颜色主题设置
-"set t_Co=256
-
-let g:solarized_termcolors=16
-" 两种流行风格的主题
-colorscheme molokai
+syntax enable
+set t_Co=256
 set background=dark
-" colorscheme solarized
-"set background=light
+colorscheme primary
 
 " ----- bling/vim-airline 设置-----
 " Always show statusbar
@@ -149,7 +151,6 @@ let s:maxoff = 50 " maximum number of lines to look backwards.
 
 " automatically remove all trailing whitespace
 autocmd FileType c,cc,cpp,hpp,java,python,cython,scala autocmd BufWritePre <buffer> :%s/\s\+$//e
-" autocmd BufWritePre *.py[x|d]? :%s/\s\+$//e
 
 function GetGooglePythonIndent(lnum)
   " Indent inside parens.
@@ -177,8 +178,6 @@ function GetGooglePythonIndent(lnum)
   return GetPythonIndent(a:lnum)
 
 endfunction
-" cython
-"set tlist_pyrex_settings='python;c:classe;m:memder;f:function'
 
 " Enable syntax highlighting for JSDocs
 let g:javascript_plugin_jsdoc = 1
@@ -205,10 +204,15 @@ imap <S-TAB> <Plug>snipMateNextOrTrigger
 "在mac下iterm终端标题中中显示文件名称
 autocmd BufEnter *.* exe 'silent ! echo -ne "\033];%:t\007"'
 
+" file-type based indentation
+filetype plugin indent on
+autocmd FileType c,cc,cpp,hpp,h,python,cython setlocal shiftwidth=2 tabstop=2
+
 " 调整窗口大小
 " lead 键=\, 使用\>, \<快捷键调整窗口大小
 nnoremap <silent> <Leader>< :exe "vertical resize " . (winwidth(0) - 10)<CR>
 nnoremap <silent> <Leader>> :exe "vertical resize " . (winwidth(0) + 10)<CR>
+nnoremap <buffer> H :<C-u>execute "!pydoc " . expand("<cword>")<CR>
 
 " 基本设置
 set encoding=utf-8
@@ -241,6 +245,7 @@ set lazyredraw " to avoiding scrolling problems
 vmap <C-V> "+pa
 vmap <C-C> "+y
 vmap <C-X> "+x
+
 "ctrl+s为保存
 map <C-S> :w<CR>
 inoremap <C-S> <C-O>:w<CR>
@@ -248,15 +253,22 @@ inoremap <C-S> <C-O>:w<CR>
 "使用tab切换window
 map <C-i> :tabn <CR><CR>
 
-" file-type based indentation
-filetype plugin indent on
-autocmd FileType c,cc,cpp,hpp,h,python,cython setlocal shiftwidth=2 tabstop=2
-
-" share clipboard in macOS 
+" share clipboard in macOS
 set clipboard=unnamed
 
 " fix the issue that save scala file slow,
 " https://github.com/scrooloose/syntastic/issues/1223
 let g:syntastic_mode_map = { "mode": "active",
                            \ "active_filetypes": [],
-                           \ "passive_filetypes": ["scala"] }
+                           \ "passive_filetypes": ["scala", "java", "cc", "cpp"] }
+
+call glaive#Install()
+" Optional: Enable codefmt's default mappings on the <Leader>= prefix.
+Glaive codefmt plugin[mappings]
+Glaive codefmt google_java_executable="java -jar /Users/lizhangzhan/.vim/autoload/google-java-format-1.7-all-deps.jar"
+
+augroup autoformat_settings
+  autocmd FileType c,cpp,proto,javascript AutoFormatBuffer clang-format
+  autocmd FileType java AutoFormatBuffer google-java-format
+  autocmd FileType python AutoFormatBuffer yapf
+augroup END
