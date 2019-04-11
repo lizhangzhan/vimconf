@@ -71,6 +71,7 @@ Plug 'vim-scripts/pydoc.vim'
 Plug 'google/vim-maktaba'
 Plug 'google/vim-codefmt'
 Plug 'google/vim-glaive'
+Plug 'maksimr/vim-jsbeautify'
 
 call plug#end()
 
@@ -267,8 +268,14 @@ call glaive#Install()
 Glaive codefmt plugin[mappings]
 Glaive codefmt google_java_executable="java -jar /Users/lizhangzhan/.vim/autoload/google-java-format-1.7-all-deps.jar"
 
+" autoformat mutiple-language source file, requirements:
+"   pip install yapf
+"   brew install clang-format
 augroup autoformat_settings
   autocmd FileType c,cpp,proto,javascript AutoFormatBuffer clang-format
   autocmd FileType java AutoFormatBuffer google-java-format
   autocmd FileType python AutoFormatBuffer yapf
 augroup END
+
+" auto format xml file, xmllint installed
+autocmd FileType xml exe ":silent %!xmllint --format --recover - 2>/dev/null"
