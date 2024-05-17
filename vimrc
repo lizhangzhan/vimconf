@@ -1,8 +1,9 @@
-" File: .vimrc
-" Author: lizhangzhan <lizhangzhan@outlook.com>
-" Download plug.vim and put it in ~/.vim/autoload
+"File: .vimrc
 " curl -fLo ~/.vim/autoload/plug.vim --create-dirs  \
 "   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+" Download google_python_style.vim and put it in ~/.vim/indent
+" curl -fLo ~/.vim/indent/python.vim --create-dirs  \
+"   https://raw.githubusercontent.com/google/styleguide/gh-pages/google_python_style.vim
 " Gotta be first
 
 call plug#begin('~/.vim/plugged')
@@ -10,17 +11,16 @@ call plug#begin('~/.vim/plugged')
 " 颜色主题
 Plug 'tomasr/molokai'
 Plug 'google/vim-colorscheme-primary'
-Plug 'bling/vim-airline'
-Plug 'edkolev/tmuxline.vim'
 
 " 快速补全
-Plug 'quark-zju/vim-cpp-auto-include'
 Plug 'vim-scripts/AutoComplPop'
-Plug 'vim-scripts/taglist.vim'
 
 " ---- vim as IDE --------
+Plug 'bling/vim-airline'
+Plug 'edkolev/tmuxline.vim'
 Plug 'junegunn/vim-easy-align'
 Plug 'NLKNguyen/copy-cut-paste.vim'
+Plug 'google/yapf', { 'rtp': 'plugins/vim', 'for': 'python' }
 
 " nerdtree 文件导航
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
@@ -28,7 +28,8 @@ Plug 'jistr/vim-nerdtree-tabs'
 Plug 'majutsushi/tagbar'
 
 " 检查程序语法错误
-Plug 'scrooloose/syntastic'
+"Plug 'scrooloose/syntastic'
+Plug 'vim-syntastic/syntastic'
 
 " 自动生成tag 文件
 "Plug 'xolox/vim-easytags'
@@ -69,8 +70,8 @@ Plug 'pangloss/vim-javascript'
 Plug 'vim-scripts/pydoc.vim'
 
 Plug 'google/vim-maktaba'
-Plug 'google/vim-codefmt'
 Plug 'google/vim-glaive'
+Plug 'google/vim-codefmt'
 Plug 'maksimr/vim-jsbeautify'
 
 call plug#end()
@@ -78,32 +79,38 @@ call plug#end()
 " ----- scrooloose/syntastic 设置 -----
 let g:syntastic_error_symbol = '✘'
 let g:syntastic_warning_symbol = "▲"
+let g:syntastic_python_checkers = ['pylint']
+let g:syntastic_check_on_wq = 0
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
 augroup mySyntastic
   au!
-  au FileType tex let b:syntastic_mode = "passive"
+  au FileType tex,python let b:syntastic_mode = "passive"
 augroup END
+" manual invocation: \ + c
+nmap <silent> <leader>c :SyntasticCheck<CR>
 
-"autocomplpop 设置
+" ------ autocomplpop 设置
 let g:AutoComplPop_IgnoreCaseOption=1
 set ignorecase
 let g:acp_behaviorKeywordCommand="\<C-n>"
 
-"设置NERDTreetagbar的宽度
+" ------ NERDTreetagbar 设置
 let NERDTreeIgnore=['\.pyc$', '\~$'] "ignore files in NERDTree
 let g:NERDTreeWinSize = 35
 let g:tagbar_width=20
-
-"快捷键设置 \n
 nmap <silent> <leader>n :NERDTree<CR>
 
 " ----- xolox/vim-easytags 设置 -----
 " Where to look for tags files
-set tags=./tags;,~/.vimtags
 let g:easytags_events = ['BufReadPost', 'BufWritePost']
 let g:easytags_async = 1
 let g:easytags_dynamic_files = 2
 let g:easytags_resolve_links = 1
 let g:easytags_suppress_ctags_warning = 1
+set tags=./tags;,~/.vimtags
 
 " ----- Raimondi/delimitMate settings -----
 let delimitMate_expand_cr = 1
@@ -125,95 +132,47 @@ let g:airline#extensions#hunks#non_zero_only = 1
 "  " Open/close tagbar with \b
 nmap <silent> <leader>b :TagbarToggle<CR>
 
+" google style colorscheme
 syntax enable
 set t_Co=256
 set background=dark
 colorscheme primary
 
 " ----- bling/vim-airline 设置-----
+"  preconditions(MUST):
+"    - Install special fonts for tmuxline
+"
 " Always show statusbar
 set laststatus=2
 " Show PASTE if in paste mode
 let g:airline_detect_paste=1
-
 " Show airline for tabs too
 let g:airline#extensions#tabline#enabled = 1
 
-"Gist设置
+" ------ Gist设置
 let g:gist_detect_filetype = 1
 let g:gist_clip_command = 'xclip -selection clipboard'
 
+" --------cpp 设置--------
+"  buildifier:
+"    - desciption: A bazel BUILD file formatter
+"    - installation: brew install buildifier
+"  clang-format
+"    - desciption: cpp code formatter
+"    - installation: brew install clang-format
+augroup autoformat_settings
+  autocmd FileType bzl AutoFormatBuffer buildifier
+  autocmd FileType c,cpp,proto,javascript AutoFormatBuffer clang-format
+augroup endif
 
 " --------python 设置--------
-
-" Indent Python in the Google way.
-setlocal indentexpr=GetGooglePythonIndent(v:lnum)
-let s:maxoff = 50 " maximum number of lines to look backwards.
-
-" automatically remove all trailing whitespace
-autocmd FileType c,cc,cpp,hpp,java,python,cython,scala autocmd BufWritePre <buffer> :%s/\s\+$//e
-
-function GetGooglePythonIndent(lnum)
-  " Indent inside parens.
-  " Align with the open paren unless it is at the end of the line.
-  " E.g.
-  "   open_paren_not_at_EOL(100,
-  "                         (200,
-  "                          300),
-  "                         400)
-  "   open_paren_at_EOL(
-  "       100, 200, 300, 400)
-  call cursor(a:lnum, 1)
-  let [par_line, par_col] = searchpairpos('(\|{\|\[', '', ')\|}\|\]', 'bW',
-        \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
-        \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-        \ . " =~ '\\(Comment\\|String\\)$'")
-  if par_line > 0
-    call cursor(par_line, 1)
-    if par_col != col("$") - 1
-      return par_col
-    endif
-  endif
-
-  " Delegate the rest to the original function.
-  return GetPythonIndent(a:lnum)
-
-endfunction
+" preconditions:
+"   - pip install pylint
+"   - pip install yapf
 
 " Enable syntax highlighting for JSDocs
 let g:javascript_plugin_jsdoc = 1
-set mouse=a
-" In many terminal emulators the mouse works just fine, thus enable it.
-if has('mouse')
-  set mouse=a
-endif
 
-" Switch syntax highlighting on, when the terminal has colors
-" Also switch on highlighting the last used search pattern.
-if &t_Co > 2 || has("gui_running")
-  syntax on
-  set hlsearch
-endif
-
-" 多行缩进
-vnoremap <Tab> >
-vnoremap <S-Tab> <
-
-" shift+tab 展开代码片段
-imap <S-TAB> <Plug>snipMateNextOrTrigger
-
-"在mac下iterm终端标题中中显示文件名称
-autocmd BufEnter *.* exe 'silent ! echo -ne "\033];%:t\007"'
-
-" file-type based indentation
-filetype plugin indent on
-autocmd FileType c,cc,cpp,hpp,h,python,cython setlocal shiftwidth=2 tabstop=2
-
-" 调整窗口大小
-" lead 键=\, 使用\>, \<快捷键调整窗口大小
-nnoremap <silent> <Leader>< :exe "vertical resize " . (winwidth(0) - 10)<CR>
-nnoremap <silent> <Leader>> :exe "vertical resize " . (winwidth(0) + 10)<CR>
-nnoremap <buffer> H :<C-u>execute "!pydoc " . expand("<cword>")<CR>
 
 " 基本设置
 set encoding=utf-8
@@ -225,7 +184,7 @@ set wrap "自动换行
 set hlsearch " 搜索高亮
 set nobackup " 无备份
 set nowritebackup
-set textwidth=80
+set textwidth=100
 
 " 语法高亮
 syntax enable
@@ -238,9 +197,43 @@ set tabstop=2
 set expandtab
 set smartindent
 set listchars=tab:>\ ,eol:¬
+set fileformat=unix
 
-" other
+" ------ usecase 设置--------
+" trim trailing whitespace
+autocmd BufWritePre * %s/\s\+$//e
+
+"在mac下iterm终端标题中中显示文件名称
+autocmd BufEnter *.* exe 'silent ! echo -ne "\033];%:t\007"'
+
+" file-type based indentation
+filetype plugin indent on
+
+" for different programing language files setting
+autocmd FileType c,cc,cpp,hpp,h setlocal shiftwidth=2 tabstop=2
+
+" share clipboard in macOS
+set clipboard=unnamed
 set lazyredraw " to avoiding scrolling problems
+
+" In many terminal emulators the mouse works just fine, thus enable it.
+if has('mouse')
+  set mouse=a
+endif
+
+" Switch syntax highlighting on, when the terminal has colors
+" Also switch on highlighting the last used search pattern.
+if &t_Co > 2 || has("gui_running")
+  syntax on
+  set hlsearch
+endif
+
+" ------ shortcut设置 ------
+" 调整窗口大小
+" lead 键=\, 使用\>, \<快捷键调整窗口大小
+nnoremap <silent> <Leader>< :exe "vertical resize " . (winwidth(0) - 10)<CR>
+nnoremap <silent> <Leader>> :exe "vertical resize " . (winwidth(0) + 10)<CR>
+nnoremap <buffer> H :<C-u>execute "!pydoc " . expand("<cword>")<CR>
 
 " 复制，粘贴，剪贴, ctrl+v ctrl+x (可视化模式)
 vmap <C-V> "+pa
@@ -253,29 +246,3 @@ inoremap <C-S> <C-O>:w<CR>
 
 "使用tab切换window
 map <C-i> :tabn <CR><CR>
-
-" share clipboard in macOS
-set clipboard=unnamed
-
-" fix the issue that save scala file slow,
-" https://github.com/scrooloose/syntastic/issues/1223
-let g:syntastic_mode_map = { "mode": "active",
-                           \ "active_filetypes": [],
-                           \ "passive_filetypes": ["scala", "java", "cc", "cpp"] }
-
-call glaive#Install()
-" Optional: Enable codefmt's default mappings on the <Leader>= prefix.
-Glaive codefmt plugin[mappings]
-Glaive codefmt google_java_executable="java -jar /Users/lizhangzhan/.vim/autoload/google-java-format-1.7-all-deps.jar"
-
-" autoformat mutiple-language source file, requirements:
-"   pip install yapf
-"   brew install clang-format
-augroup autoformat_settings
-  autocmd FileType c,cpp,proto,javascript AutoFormatBuffer clang-format
-  autocmd FileType java AutoFormatBuffer google-java-format
-  autocmd FileType python AutoFormatBuffer yapf
-augroup END
-
-" auto format xml file, xmllint installed
-autocmd FileType xml exe ":silent %!xmllint --format --recover - 2>/dev/null"
