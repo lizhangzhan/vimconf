@@ -1,0 +1,21 @@
+name: vim config
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch: 
+
+jobs:
+  tutorial:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "hello world"
+
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: List files in respository
+        run: |
+          echo "the repository ${{ github.respository }} contains the following files:" 
+          tree
